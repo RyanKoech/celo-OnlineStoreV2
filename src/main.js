@@ -1,32 +1,13 @@
 import Web3 from 'web3'
 import { newKitFromWeb3 } from '@celo/contractkit'
 import BigNumber from "bignumber.js"
+import marketAbi from "../contract/market.abi.json";
 
 const ERC20_DECIMALS = 18
+const marketContractAddress = ""
 
 let kit
-
-const connectCeloWallet = async function () {
-  if (window.celo) {
-    showNotification("⚠️ Please approve this DApp to use it.")
-    try {
-      await window.celo.enable()
-      hideNotification()
-
-      const web3 = new Web3(window.celo)
-      kit = newKitFromWeb3(web3)
-
-      const accounts = await kit.web3.eth.getAccounts()
-      kit.defaultAccount = accounts[0]
-
-    } catch (error) {
-      showNotification(`⚠️ ${error}.`)
-    }
-  } else {
-    showNotification("⚠️ Please install the CeloExtensionWallet.")
-  }
-}
-
+let contract
 const products = [
   {
     id: 1,
@@ -62,6 +43,29 @@ const products = [
     stock: 2,
   },
 ];
+
+const connectCeloWallet = async function () {
+  if (window.celo) {
+    showNotification("⚠️ Please approve this DApp to use it.")
+    try {
+      await window.celo.enable()
+      hideNotification()
+
+      const web3 = new Web3(window.celo)
+      kit = newKitFromWeb3(web3)
+
+      const accounts = await kit.web3.eth.getAccounts()
+      kit.defaultAccount = accounts[0]
+
+      contract = new kit.web3.eth.Contract(marketAbi, marketContractAddress)
+
+    } catch (error) {
+      showNotification(`⚠️ ${error}.`)
+    }
+  } else {
+    showNotification("⚠️ Please install the CeloExtensionWallet.")
+  }
+}
 
 const getAddressIcon = address => {
 
