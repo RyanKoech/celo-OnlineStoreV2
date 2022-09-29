@@ -4,11 +4,11 @@ import BigNumber from "bignumber.js"
 import marketAbi from "../contract/market.abi.json";
 
 const ERC20_DECIMALS = 18
-const marketContractAddress = ""
+const marketContractAddress = "0x8d94BB5842a297E262a9045ae8b1d444bC5d946f"
 
 let kit
 let contract
-const products = [
+let products = [
   {
     id: 1,
     owner: "0x6D7420913eCf06d53c67b97e2FC9b95E0AC917b7",
@@ -138,6 +138,30 @@ const getBalance = async () => {
   document.querySelector("#balance").textContent = cUSDBalance;
 };
 
+const getProducts = async () => {
+  const _productsLength = await contract.methods.getProductsLength().call()
+  const _products = []
+
+  for (let i = 0; i < _productsLength; i++) {
+    let _product = new Promise(async (resolve, reject) => {
+      let p = await contract.methods.readProduct(i).call()
+      resolve({
+        index: i,
+        owner: p[0],
+        name: p[1],
+        image: p[2],
+        description: p[3],
+        price: new  BigNumber(p[4]),
+        sold: p[5],
+        stock: p[6],
+      })
+    })
+    _products.push(_product)
+  }
+  products = await Promise.all(_products)
+  renderProducts()
+}
+
 const renderProducts = () => {
   document.querySelector("#shop-items-container").innerHTML = "";
   products.forEach((_product) => {
@@ -182,7 +206,7 @@ window.addEventListener("load", async () => {
   showNotification("⌛ Loading...")
   await connectCeloWallet()
   await getBalance()
-  renderProducts()
+  await getProducts()
   hideNotification()
 });
 
