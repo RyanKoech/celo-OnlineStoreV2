@@ -2,47 +2,15 @@ import Web3 from 'web3'
 import { newKitFromWeb3 } from '@celo/contractkit'
 import BigNumber from "bignumber.js"
 import marketAbi from "../contract/market.abi.json";
+import erc20Abi from "../contract/erc20.abi.json";
 
 const ERC20_DECIMALS = 18
-const marketContractAddress = "0x8d94BB5842a297E262a9045ae8b1d444bC5d946f"
+const marketContractAddress = "0x15f4222D8D04A58A2dA557D66f1e8f7007c986d5"
+const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 
 let kit
 let contract
-let products = [
-  {
-    id: 1,
-    owner: "0x6D7420913eCf06d53c67b97e2FC9b95E0AC917b7",
-    name: "Name1",
-    description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nulla, beatae. Consectetur ab eius illo esse nostrum quibusdam repellendus quod illum.",
-    image:
-      "https://cdn.shopify.com/s/files/1/0070/7032/files/trending-products_c8d0d15c-9afc-47e3-9ba2-f7bad0505b9b.png",
-    price: 12,
-    sold: 2,
-    stock: 2,
-  },
-  {
-    id: 2,
-    owner: "0x6D7420913eCf06d53c67b97e2FC9b95E0AC917b7",
-    name: "Name2",
-    description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nulla, beatae. Consectetur ab eius illo esse nostrum quibusdam repellendus quod illum. Consectetur ab eius illo esse nostrum quibusdam repellendus.",
-    image:
-      "https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/gh-012021-best-hair-products-1642523366.png",
-    price: 12,
-    sold: 2,
-    stock: 2,
-  },
-  {
-    id: 3,
-    owner: "0x6D7420913eCf06d53c67b97e2FC9b95E0AC917b7",
-    name: "Name3",
-    description: "Lorem ipsum dolor esse nostrum quibusdam repellendus quod illum.",
-    image:
-      "https://hips.hearstapps.com/vader-prod.s3.amazonaws.com/1637093284-41EuH5nHVDL._SL500_.jpg",
-    price: 32,
-    sold: 3,
-    stock: 2,
-  },
-];
+let products = [];
 
 const connectCeloWallet = async function () {
   if (window.celo) {
@@ -146,7 +114,7 @@ const getProducts = async () => {
     let _product = new Promise(async (resolve, reject) => {
       let p = await contract.methods.readProduct(i).call()
       resolve({
-        index: i,
+        id: i,
         owner: p[0],
         name: p[1],
         image: p[2],
@@ -194,8 +162,14 @@ const options = {
   }
 };
 
-const showModal = () => {
-
+async function approve(_price, _amount) {
+  const cUSDContract = new kit.web3.eth.Contract(erc20Abi, cUSDContractAddress)
+  const totalAmount = _price.multipliedBy(_amount);
+  console.log({totalAmount, _price});
+  const result = await cUSDContract.methods
+    .approve(marketContractAddress, totalAmount)
+    .send({ from: kit.defaultAccount })
+  return result
 }
 
 const authModal = document.getElementById("authentication-modal");
@@ -217,18 +191,27 @@ document.querySelector("#body").addEventListener('click', e => {
   }
 });
 
-document.querySelector("#body").addEventListener('click', e => {
+document.querySelector("#body").addEventListener('click', async (e) => {
   if(e.target.className.includes("btnBuy")){
-    const index = e.target.id - 1
+    const index = e.target.id
     const amount = parseInt(e.target.previousElementSibling.firstElementChild.value)
-    // if(!isNaN(parseInt(amount))){
-    //   showNotification(`Please enter a valid amount`);
-    //   return
-    // }
-    products[index].sold = products[index].sold + amount
-    products[index].stock = products[index].stock - amount
-    showNotification(`🎉 You successfully bought "${products[index].name}".`);
-    renderProducts();
+    showNotification('⌛ Waiting for payment approval...');
+    try{
+      await approve(products[index].price, amount)
+    }catch(error) {
+      showNotification(`⚠️ ${error}.`);
+    }
+    showNotification(`⌛ Awaiting payment for "${products[index].name}"...`)
+    try {
+      const result = await contract.methods
+        .buyProduct(index, amount)
+        .send({ from: kit.defaultAccount })
+      showNotification(`🎉 You successfully bought "${products[index].name}".`)
+      getProducts()
+      getBalance()
+    } catch (error) {
+      showNotification(`⚠️ ${error}.`)
+    }
   }
 })
 
