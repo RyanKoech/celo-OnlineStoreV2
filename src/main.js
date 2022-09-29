@@ -11,6 +11,26 @@ const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 let kit
 let contract
 let products = [];
+let productId = 0;
+
+const options = {
+  onHide: () => {
+      console.log('modal is hidden');
+  },
+  onShow: () => {
+      console.log('modal is shown');
+  },
+  onToggle: () => {
+      console.log('modal has been toggled');
+  }
+};
+
+
+const authModal = document.getElementById("authentication-modal");
+const modal = new Modal(authModal, options);
+
+const editModal = document.getElementById("edit-modal");
+const modalEdit = new Modal(editModal, options);
 
 const connectCeloWallet = async function () {
   if (window.celo) {
@@ -66,7 +86,7 @@ const getProductItem = (product) => {
         alt="product image" />
       <div class="px-5 py-5 relative">
         <button
-          id="${product.id}" class="bg-white text-gray-400 rounded-full p-2 w-fit drop-shadow-md absolute right-0 top-0 -translate-x-1/3 -translate-y-3/4 focus:ring-4 focus:outline-none focus:ring-blue-300 authentication-modal" type="button">
+          id="${product.id}" class="bg-white text-gray-400 rounded-full p-2 w-fit drop-shadow-md absolute right-0 top-0 -translate-x-1/3 -translate-y-3/4 focus:ring-4 focus:outline-none focus:ring-blue-300 edit-modal" type="button">
           <svg class="w-6 h-6 authentication-modal" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
@@ -149,19 +169,6 @@ const hideNotification = () => {
   document.querySelector("#notification").style.display = "none";
 }
 
-
-const options = {
-  onHide: () => {
-      console.log('modal is hidden');
-  },
-  onShow: () => {
-      console.log('modal is shown');
-  },
-  onToggle: () => {
-      console.log('modal has been toggled');
-  }
-};
-
 async function approve(_price, _amount) {
   const cUSDContract = new kit.web3.eth.Contract(erc20Abi, cUSDContractAddress)
   const totalAmount = _price.multipliedBy(_amount);
@@ -172,9 +179,6 @@ async function approve(_price, _amount) {
   return result
 }
 
-const authModal = document.getElementById("authentication-modal");
-
-const modal = new Modal(authModal, options);
 
 window.addEventListener("load", async () => {
   showNotification("⌛ Loading...")
@@ -190,6 +194,39 @@ document.querySelector("#body").addEventListener('click', e => {
     modal.toggle();
   }
 });
+
+document.querySelector("#body").addEventListener('click', e => {
+  if(e.target.className.includes("edit-modal")){
+    productId = e.target.id
+    modalEdit.toggle();
+  }
+});
+
+document.querySelector("#body").addEventListener('click', async (e) => {
+  if(e.target.className.includes("btnEdit-price")){
+    modalEdit.toggle();
+    try{
+      const result = await contract.methods
+        .updatePrice(productId ,new BigNumber(document.getElementById("edit-price").value).shiftedBy(ERC20_DECIMALS).toString())
+        .send({from: kit.defaultAccount })
+    }catch(error) {
+      showNotification(`⚠️ ${error}.`)
+    }
+    showNotification(`🎉 You successfully updated "${products[productId].name} price".`);
+    getProducts();
+  } else if(e.target.className.includes("btnEdit-stock")){
+    modalEdit.toggle();
+    try{
+      const result = await contract.methods
+        .updateStock(productId ,document.getElementById("edit-stock").value)
+        .send({from: kit.defaultAccount })
+    }catch(error) {
+      showNotification(`⚠️ ${error}.`)
+    }
+    showNotification(`🎉 You successfully updated "${products[productId].name} stock count".`);
+    getProducts();
+  }
+})
 
 document.querySelector("#body").addEventListener('click', async (e) => {
   if(e.target.className.includes("btnBuy")){
