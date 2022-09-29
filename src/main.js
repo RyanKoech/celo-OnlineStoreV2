@@ -116,7 +116,7 @@ const getProductItem = (product) => {
         </div>
         <div class="flex justify-between items-center pt-8">
           <span class="text-xl text-gray-900">${product.stock} in stock</span>
-          <span class="text-xl font-bold text-gray-900">cUSD ${product.price}</span>
+          <span class="text-xl font-bold text-gray-900">cUSD ${product.price.shiftedBy(-ERC20_DECIMALS).toFixed(2)}</span>
         </div>
         <div class="flex justify-between items-center pt-2">
           <div class="">
@@ -151,7 +151,7 @@ const getProducts = async () => {
         name: p[1],
         image: p[2],
         description: p[3],
-        price: new  BigNumber(p[4]),
+        price: new BigNumber(p[4]),
         sold: p[5],
         stock: p[6],
       })
@@ -232,20 +232,25 @@ document.querySelector("#body").addEventListener('click', e => {
   }
 })
 
-document.querySelector("#form").addEventListener("submit", e => {
+document.querySelector("#form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const newProduct = {
-    id: 1,
-    owner: "0x6D7420913eCf06d53c67b97e2FC9b95E0AC917b7",
-    name: document.getElementById("name").value,
-    description: document.getElementById("description").value,
-    image: document.getElementById("image").value,
-    price: document.getElementById("price").value,
-    sold: 0,
-    stock: document.getElementById("stock").value,
+  const newProduct = [
+    document.getElementById("name").value,
+    document.getElementById("image").value,
+    document.getElementById("description").value,
+    new BigNumber(document.getElementById("price").value).shiftedBy(ERC20_DECIMALS).toString(),
+    document.getElementById("stock").value,
+  ]
+  try{
+    const result = await contract.methods
+      .writeProduct(...newProduct)
+      .send({from: kit.defaultAccount })
+  }catch(error) {
+    showNotification(`⚠️ ${error}.`)
   }
-  products.push(newProduct);
-  showNotification(`🎉 You successfully added "${newProduct.name}".`);
-  renderProducts();
+  // products.push(newProduct);
+  showNotification(`🎉 You successfully added "${newProduct[0]}".`);
+  // renderProducts();
+  getProducts();
   modal.toggle();
 });
