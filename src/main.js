@@ -5,7 +5,7 @@ import marketAbi from "../contract/market.abi.json";
 import erc20Abi from "../contract/erc20.abi.json";
 
 const ERC20_DECIMALS = 18
-const marketContractAddress = "0x15f4222D8D04A58A2dA557D66f1e8f7007c986d5"
+const marketContractAddress = "0xF17F786FfD86DE07680ef3a7665CC383f24ba268"
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 
 let kit
@@ -67,7 +67,7 @@ const getAddressIcon = address => {
 
   return `
     <div class="absolute top-0 left-0 translate-x-1/3 -translate-y-3/4">
-      <a href="https://alfajores-blockscout.celo-testnet.org/address/${address}/transactions">
+      <a href="https://alfajores-blockscout.celo-testnet.org/address/${address}/transactions"  target="_blank">
         <img class="rounded-full object-cover h-16 w-16 drop-shadow-md border-2 border-blue-500"
           src="${icon}" alt="${address}"
           alt="">
@@ -106,7 +106,7 @@ const getProductItem = (product) => {
           </div>
           <a href="#"
           id="${product.id}" class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 btnBuy">
-            Buy : 1.25 cUSD
+            Buy
           </a>
         </div>
       </div>
@@ -262,6 +262,7 @@ document.querySelector("#body").addEventListener('click', async (e) => {
 
 document.querySelector("#form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  modal.toggle();
   const newProduct = [
     document.getElementById("name").value,
     document.getElementById("image").value,
@@ -280,5 +281,4 @@ document.querySelector("#form").addEventListener("submit", async (e) => {
   showNotification(`🎉 You successfully added "${newProduct[0]}".`);
   // renderProducts();
   getProducts();
-  modal.toggle();
 });
