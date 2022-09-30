@@ -85,14 +85,7 @@ const getProductItem = (product) => {
         src="${product.image}"
         alt="product image" />
       <div class="px-5 py-5 relative">
-        <button
-          id="${product.id}" class="bg-white text-gray-400 rounded-full p-2 w-fit drop-shadow-md absolute right-0 top-0 -translate-x-1/3 -translate-y-3/4 focus:ring-4 focus:outline-none focus:ring-blue-300 edit-modal" type="button">
-          <svg class="w-6 h-6 authentication-modal" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
-            </path>
-          </svg>
-        </button>
+        ${getEditButton(product.id, product.owner)}
         ${getAddressIcon(product.owner)}
         <a href="#">
           <h5 class="text-xl font-semibold tracking-tight text-gray-900">
@@ -177,6 +170,21 @@ async function approve(_price, _amount) {
     .approve(marketContractAddress, totalAmount)
     .send({ from: kit.defaultAccount })
   return result
+}
+
+const getEditButton = (id, owner) => {
+  return owner == kit.defaultAccount ? 
+    `
+    <button
+      id="${id}" class="bg-white text-gray-400 rounded-full p-2 w-fit drop-shadow-md absolute right-0 top-0 -translate-x-1/3 -translate-y-3/4 focus:ring-4 focus:outline-none focus:ring-blue-300 edit-modal" type="button">
+      <svg class="w-6 h-6 authentication-modal" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+        </path>
+      </svg>
+    </button>
+    ` :
+    ''
 }
 
 
