@@ -5,7 +5,7 @@ import marketAbi from "../contract/market.abi.json";
 import erc20Abi from "../contract/erc20.abi.json";
 
 const ERC20_DECIMALS = 18
-const marketContractAddress = "0xF17F786FfD86DE07680ef3a7665CC383f24ba268"
+const marketContractAddress = "0xC9E12b3b9994c7Cef464f7a8985e7EF0b6eb0426"
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 
 let kit
@@ -77,6 +77,7 @@ const getAddressIcon = address => {
 }
 
 const getProductItem = (product) => {
+  const isOwner = product.owner == kit.defaultAccount;
   return `
       <span class="bg-white px-2 py-1 absolute top-0 right-0">
         Sold ${product.sold}
@@ -85,7 +86,7 @@ const getProductItem = (product) => {
         src="${product.image}"
         alt="product image" />
       <div class="px-5 py-5 relative">
-        ${getEditButton(product.id, product.owner)}
+        ${getEditButton(product.id, isOwner)}
         ${getAddressIcon(product.owner)}
         <a href="#">
           <h5 class="text-xl font-semibold tracking-tight text-gray-900">
@@ -101,13 +102,13 @@ const getProductItem = (product) => {
         </div>
         <div class="flex justify-between items-center pt-2">
           <div class="">
-            <input type="number" id="default-input" placeholder="Amount" step="1" min="1"
+            <input type="number" ${isOwner ? "disabled" : ""} id="default-input" placeholder="Amount" step="1" min="1"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
           </div>
-          <a href="#"
-          id="${product.id}" class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 btnBuy">
+          <button type="button"
+          id="${product.id}" ${isOwner ? "disabled" : ""} class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 ${isOwner ? "opacity-20 cursor-not-allowed" : "btnBuy"}">
             Buy
-          </a>
+          </button>
         </div>
       </div>
   `;
@@ -172,8 +173,8 @@ async function approve(_price, _amount) {
   return result
 }
 
-const getEditButton = (id, owner) => {
-  return owner == kit.defaultAccount ? 
+const getEditButton = (id, isOwner) => {
+  return isOwner ? 
     `
     <button
       id="${id}" class="bg-white text-gray-400 rounded-full p-2 w-fit drop-shadow-md absolute right-0 top-0 -translate-x-1/3 -translate-y-3/4 focus:ring-4 focus:outline-none focus:ring-blue-300 edit-modal" type="button">
