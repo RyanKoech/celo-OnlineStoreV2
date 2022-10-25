@@ -5,13 +5,14 @@ import marketAbi from "../contract/market.abi.json";
 import erc20Abi from "../contract/erc20.abi.json";
 
 const ERC20_DECIMALS = 18
-const marketContractAddress = "0xC9E12b3b9994c7Cef464f7a8985e7EF0b6eb0426"
+const marketContractAddress = "0x40371d5a290404CB989D37AF9F39dc8039536dc1"
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 
 let kit
 let contract
 let products = [];
 let productId = 0;
+let royaltyBalance = 0;
 
 const options = {
   onHide: () => {
@@ -105,6 +106,10 @@ const getProductItem = (product) => {
             <input type="number" ${isOwner ? "disabled" : ""} id="default-input" placeholder="Amount" step="1" min="1"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
           </div>
+          <div class="">
+            <input type="number"  ${isOwner ? "disabled" : ""} id="default-input" placeholder="Royalties" step="1" min="1"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+          </div>
           <button type="button"
           id="${product.id}" ${isOwner ? "disabled" : ""} class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 ${isOwner ? "opacity-20 cursor-not-allowed" : "btnBuy"}">
             Buy
@@ -119,6 +124,14 @@ const getBalance = async () => {
   const cUSDBalance = totalBalance.cUSD.shiftedBy(-ERC20_DECIMALS).toFixed(2)
   document.querySelector("#balance").textContent = cUSDBalance;
 };
+
+const getRoyaltiesBalance = async () => {
+  const _royaltiesBalance = await contract.methods
+    .getRoyaltyPoints()
+    .call()
+  royaltyBalance=_royaltiesBalance
+  document.querySelector("#royalties_balance").textContent = _royaltiesBalance; 
+}
 
 const getProducts = async () => {
   const _productsLength = await contract.methods.getProductsLength().call()
@@ -193,6 +206,7 @@ window.addEventListener("load", async () => {
   showNotification("⌛ Loading...")
   await connectCeloWallet()
   await getBalance()
+  await getRoyaltiesBalance()
   await getProducts()
   hideNotification()
 });
@@ -240,7 +254,12 @@ document.querySelector("#body").addEventListener('click', async (e) => {
 document.querySelector("#body").addEventListener('click', async (e) => {
   if(e.target.className.includes("btnBuy")){
     const index = e.target.id
-    const amount = parseInt(e.target.previousElementSibling.firstElementChild.value)
+    const amount = parseInt(e.target.previousElementSibling.previousElementSibling.firstElementChild.value)
+    const royalty = isNaN(parseInt(e.target.previousElementSibling.firstElementChild.value)) ? 0 : parseInt(e.target.previousElementSibling.firstElementChild.value)
+    if(royalty > royaltyBalance){
+      alert("Not enough royalties")
+      return
+    }
     showNotification('⌛ Waiting for payment approval...');
     try{
       await approve(products[index].price, amount)
@@ -250,10 +269,11 @@ document.querySelector("#body").addEventListener('click', async (e) => {
     showNotification(`⌛ Awaiting payment for "${products[index].name}"...`)
     try {
       const result = await contract.methods
-        .buyProduct(index, amount)
+        .buyProduct(index, amount, royalty)
         .send({ from: kit.defaultAccount })
       showNotification(`🎉 You successfully bought "${products[index].name}".`)
       getProducts()
+      getRoyaltiesBalance()
       getBalance()
     } catch (error) {
       showNotification(`⚠️ ${error}.`)

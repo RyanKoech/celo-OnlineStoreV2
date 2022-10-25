@@ -10,6 +10,11 @@
 				"internalType": "uint256",
 				"name": "_amount",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_royaltySpent",
+				"type": "uint256"
 			}
 		],
 		"name": "buyProduct",
@@ -20,6 +25,19 @@
 	{
 		"inputs": [],
 		"name": "getProductsLength",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getRoyaltyPoints",
 		"outputs": [
 			{
 				"internalType": "uint256",
