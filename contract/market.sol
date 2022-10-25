@@ -30,6 +30,7 @@ contract DecentralizedMarket {
     }
 
     mapping (uint => Product) private products;
+    mapping (address => uint) private royalty;
 
     // modifier to check if caller is the owner of product
     modifier onlyProductOwner(uint _index){
@@ -85,25 +86,29 @@ contract DecentralizedMarket {
     }
 
     /**
-        * @dev allow users to buy a product listed on the platform
+        * @dev allow users to buy a product listed on the platform, awards Royalt points for every cUSD spent, and give 0.1 cUSD discount for every royaly points spent.
         * @param _amount is the number of products to buy
         * @notice Transaction will revert if there are not enough quantity of product in stock to fulfill the order
      */
-    function buyProduct(uint _index, uint _amount) public payable  {
+    function buyProduct(uint _index, uint _amount, uint _royaltySpent) public payable  {
         Product storage currentProduct = products[_index];
+        uint totalAmout = (currentProduct.price * _amount) - (_royaltySpent * 100000000000000000);
         require(_amount > 0, "You must buy at least one product");
+        require( royalty[msg.sender] >=  _royaltySpent, "Not enought royalties");
         require(currentProduct.stock >= _amount, "Not enough in stock");
         require(currentProduct.owner != msg.sender, "You can't buy your products");
         require(
           IERC20Token(cUsdTokenAddress).transferFrom(
             msg.sender,
             currentProduct.owner,
-            currentProduct.price * _amount
+            totalAmout
           ),
           "Transfer failed."
         );
+        uint newRoyaltyPoints = royalty[msg.sender] + (totalAmout / 1000000000000000000) - _royaltySpent;
         uint newSoldAmount = currentProduct.sold + _amount;
         uint newStockAmount = currentProduct.stock - _amount;
+        royalty[msg.sender] = newRoyaltyPoints;
         currentProduct.sold = newSoldAmount;
         currentProduct.stock = newStockAmount;
     }
@@ -125,5 +130,12 @@ contract DecentralizedMarket {
      */
     function updatePrice(uint _index, uint _price) public onlyProductOwner(_index) {
         products[_index].price = _price;
+    }
+
+    /**
+        * @dev allow users to get the amount of royalty points they have
+     */
+    function getRoyaltyPoints() public view returns(uint) {
+        return royalty[msg.sender];
     }
 }
