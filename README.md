@@ -1,3 +1,6 @@
+# Celo OnlineStore V2
+> The presented dApp is an online store where individuals can add and sell their products. It is an improvement on the module tutorial in that it enables product editing by the owner and stock management. Furthermore, a new loyalty system, called royalty has been added which enables users to earn points for spending above 1 cUSD and later redeem them for exclusive deals.
+
 # Install
 
 ```
